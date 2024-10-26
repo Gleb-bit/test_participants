@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from sqlalchemy.exc import IntegrityError
 
+from views.participant_list import list_router
 from views.participants import participants_router
 from exc_handlers.base import value_error_handler, related_errors_handler
 
@@ -11,7 +12,8 @@ exc_handlers = {
     IntegrityError: related_errors_handler,
 }
 routers = {
-    "/clients": participants_router,
+    "/api/clients": participants_router,
+    "/api": list_router,
 }
 
 for exception, handler in exc_handlers.items():

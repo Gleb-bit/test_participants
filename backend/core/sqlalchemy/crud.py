@@ -1,4 +1,7 @@
+from typing import Optional
+
 from fastapi import HTTPException, Response
+from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.sqlalchemy.orm import Orm
@@ -99,17 +102,49 @@ class Crud:
 
         return Response(content=content, status_code=status)
 
-    async def list(self, session: AsyncSession, relations=None):
+    async def list(
+        self,
+        session: AsyncSession,
+        relations=None,
+        sort_field: Optional[str] = None,
+        sort_order: Optional[str] = "asc",
+        **filters,
+    ):
         """
-        Method that returns a list of instances of the model
+        Метод для получения списка объектов с фильтрацией и сортировкой.
 
-        :param:
-        - `session`: The current database session.
+        :param session: Текущая сессия базы данных.
+        :param relations: Связанные поля.
+        :param sort_field: Поле для сортировки.
+        :param sort_order: Порядок сортировки ('asc' или 'desc').
+        :param filters: Произвольные параметры для фильтрации.
 
-        :return:
-            `List of objects.`
+        :return: Список объектов с примененными фильтрацией и сортировкой.
         """
-        return await Orm.all(self.model, session, relations)
+
+        query = select(self.model)
+
+        for field, value in filters.items():
+            if value is not None:
+                query = query.filter(getattr(self.model, field) == value)
+
+        if sort_field or sort_order:
+            sort_field = sort_field or "id"
+            sort_column = getattr(self.model, sort_field, None)
+
+            if sort_column:
+                order = (
+                    asc(sort_column)
+                    if sort_order.lower() == "asc"
+                    else desc(sort_column)
+                )
+                query = query.order_by(order)
+
+        if relations:
+            query = Orm.get_query_with_relations(query, relations)
+
+        execution = await session.execute(query)
+        return execution.scalars().all()
 
     async def retrieve(self, obj_id: int, session: AsyncSession, relations=None):
         """
