@@ -149,10 +149,7 @@ class Crud:
         if not obj:
             raise HTTPException(404, self.get_not_found_text(obj_id))
 
-        for key, value in data.items():
-            setattr(obj, key, value)
-
-        await session.commit()
+        await Orm.update(obj, data, session)
         await session.refresh(obj)
 
         return obj

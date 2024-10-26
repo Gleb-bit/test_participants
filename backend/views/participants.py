@@ -1,18 +1,53 @@
-from fastapi import APIRouter, Depends
+from fastapi import Depends, APIRouter, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config.database_conf import get_session
+from config.celery_conf import send_email_task
 from core.utils.image import base64_to_image_with_format
 from services.avatar import add_watermark
 from tables.participants import Participant, avatars_folder_path
 from models.participants import ParticipantModel, ParticipantReadModel, TokenModel
-from config import get_session, SECRET_KEY
+from config.settings import SECRET_KEY
 from core.fastapi.auth import AuthEmail
 from core.sqlalchemy.orm import Orm
 
 auth = AuthEmail(SECRET_KEY, TokenModel)
-
 participants_router = APIRouter()
+
+
+@participants_router.post("/{id}/match/")
+async def match_participants(
+    id: int,
+    session: AsyncSession = Depends(get_session),
+    credentials: TokenModel = Depends(auth.get_current_user),
+):
+    request_user = await Orm.scalar(
+        Participant, session, Participant.email == credentials.email
+    )
+    if request_user.estimates_number == 5:
+        raise HTTPException(400, "Вы исчерпали дневной лимит")
+
+    participant = await Orm.scalar(Participant, session, Participant.id == id)
+    if not participant:
+        raise HTTPException(400, "К сожалению, без взаимной симпатии")
+
+    participant_email = participant.email
+
+    send_email_task.delay(
+        [participant_email],
+        f"Вы понравились {request_user.first_name}!\n",
+        f"Почта участника: {request_user.email}",
+    )
+
+    await Orm.update_field(  # обновляем счетчик
+        Participant,
+        {"estimates_number": Participant.estimates_number + 1},
+        session,
+        Participant.id == request_user.id,
+    )
+
+    return {"email": participant_email}
 
 
 @participants_router.post("/create/", response_model=ParticipantReadModel)
@@ -33,9 +68,7 @@ async def register(
         avatar_path = avatars_folder_path + participant.avatar_title
         base64_to_image_with_format(participant.avatar_base64, avatar_path)
 
-        add_watermark(
-            avatar_path, "etc_files/watermark.png", avatar_path
-        )
+        add_watermark(avatar_path, "etc_files/watermark.png", avatar_path)
         data["avatar_url"] = avatar_path
 
     return await Orm.create(Participant, data, session)

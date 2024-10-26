@@ -1,17 +1,7 @@
-from os import environ
-
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-POSTGRES_DB = environ.get("POSTGRES_DB")
-POSTGRES_USER = environ.get("POSTGRES_USER")
-POSTGRES_PASSWORD = environ.get("POSTGRES_PASSWORD")
-POSTGRES_HOST = environ.get("POSTGRES_HOST")
-POSTGRES_PORT = environ.get("POSTGRES_PORT")
-
-SECRET_KEY = environ.get("SECRET_KEY")
-DATABASE_URL = environ.get("DATABASE_URL")
-
+from config.settings import DATABASE_URL
 
 Base = declarative_base()
 

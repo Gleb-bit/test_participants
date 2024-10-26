@@ -1,8 +1,9 @@
 from typing import Union, Any, Sequence
 
-from sqlalchemy import select, Result, Row, RowMapping, insert
+from sqlalchemy import select, Result, Row, RowMapping, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 
 
 class Orm:
@@ -143,9 +144,27 @@ class Orm:
 
         return query.scalar()
 
+    @staticmethod
+    async def update(obj, data: dict, session: AsyncSession):
+        for key, value in data.items():
+            setattr(obj, key, value)
+
+        await session.commit()
+
+    @staticmethod
+    async def update_field(
+        model, update_fields: dict, session: AsyncSession, filter_expr=None
+    ):
+        stmt = update(model)
+        if filter_expr:
+            stmt = stmt.where(filter_expr)
+
+        await session.execute(stmt.values(**update_fields))
+        await session.commit()
+
     @classmethod
     async def where(
-        cls, model, filter_expr, session: AsyncSession, relations=None
+        cls, model, filter_expr, session: AsyncSession, relations=None, execute=True
     ) -> Result:
         """
         Method to filter records in the model based on a filter expression.
@@ -163,4 +182,7 @@ class Orm:
         if relations:
             query = cls.get_query_with_relations(query, relations)
 
-        return await session.execute(query.where(filter_expr))
+        if execute:
+            return await session.execute(query.where(filter_expr))
+        else:
+            return query.where(filter_expr)

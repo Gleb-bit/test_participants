@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -21,6 +21,18 @@ class ParticipantModel(BaseModel):
 
     gender: Optional[GenderEnum]
 
+    @model_validator(mode="before")
+    def check_avatar_fields(cls, values):
+        avatar_base64 = values.get("avatar_base64")
+        avatar_title = values.get("avatar_title")
+
+        if (avatar_base64 is None) != (avatar_title is None):
+            raise ValueError(
+                "Both avatar_base64 and avatar_title must be provided or neither."
+            )
+
+        return values
+
 
 class ParticipantReadModel(BaseModel):
     id: int
@@ -31,6 +43,8 @@ class ParticipantReadModel(BaseModel):
 
     avatar_url: Optional[str]
     gender: Optional[GenderEnum]
+
+    estimates_number: int
 
     created_at: datetime
     is_active: bool

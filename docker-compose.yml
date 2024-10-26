@@ -26,33 +26,45 @@ services:
     env_file:
       - .env
 
-#  rabbit:
-#    container_name: rabbit
-#    restart: always
-#    image: rabbitmq:3.10
-#    expose:
-#      - "5672"
-#      - "15672"
-#    volumes:
-#      - rabbitmqdata:/var/lib/rabbitmq
+  redis:
+    image: redis:latest
+    container_name: redis
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
 
+  rabbitmq:
+    container_name: rabbit
+    restart: always
+    image: rabbitmq:3.10
+    expose:
+      - "5672"
+      - "15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
 
-#  celery:
-#    container_name: celery
-#    restart: always
-#    build:
-#      dockerfile: ./Dockerfile
-#      context: .
-#    volumes:
-#      - ./backend:/backend:cached
-#      - media:/backend/media
-#    env_file:
-#      - .env
-#    command: celery -A config.celery worker --beat --loglevel=info
-#    depends_on:
-#      - backend
-#      - db
-#      - rabbit
+  celery:
+    container_name: celery
+    restart: always
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    volumes:
+      - ./backend:/backend:cached
+      - media:/backend/media
+    env_file:
+      - .env
+    command: celery -A config.celery_conf worker --beat --loglevel=info
+    depends_on:
+      - backend
+      - db
+      - rabbitmq
+      - redis
 
 volumes:
   pgdata:
+  media:
+  static:
+  redis_data:
+  rabbitmqdata:

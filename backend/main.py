@@ -18,4 +18,4 @@ for exception, handler in exc_handlers.items():
     app.add_exception_handler(exception, handler)
 
 for prefix, router in routers.items():
-    app.include_router(router, prefix=prefix, tags=["api/"])
+    app.include_router(router, prefix=prefix)

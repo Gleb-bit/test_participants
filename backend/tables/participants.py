@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import Column, Integer, String, Boolean, Enum as alchemy_Enum, DateTime
-from config import Base
+from config.database_conf import Base
 
 avatars_folder_path = "etc_files/avatars/"
 
@@ -27,6 +27,8 @@ class Participant(Base):
 
     avatar_url = Column(String)
     gender = Column(alchemy_Enum(GenderEnum), nullable=False)
+
+    estimates_number = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.now)
     is_active = Column(Boolean, default=True)

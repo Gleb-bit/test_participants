@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="participants/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="clients/login/")
 
 
 class AuthEmail:
