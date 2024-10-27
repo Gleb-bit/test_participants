@@ -30,14 +30,16 @@ services:
     image: redis:latest
     container_name: redis
     expose:
-      - "6379"
+      - 6379
     volumes:
       - redis_data:/data
+    env_file:
+      - .env
 
   rabbitmq:
     container_name: rabbit
     restart: always
-    image: rabbitmq:3.10
+    image: rabbitmq:latest
     expose:
       - "5672"
       - "15672"

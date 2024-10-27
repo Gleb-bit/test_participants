@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="clients/login/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/clients/login/")
 
 
 class AuthEmail:
@@ -35,7 +35,7 @@ class AuthEmail:
 
         return jwt.encode(to_encode, self.secret_key, self.algorithm)
 
-    def get_current_user(self, token: str = Depends(oauth2_scheme)):
+    def get_request_user(self, token: str = Depends(oauth2_scheme)):
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             email: str = payload.get("sub")
@@ -51,10 +51,10 @@ class AuthEmail:
 
         return token_data
 
-    def get_current_user_with_roles(self, required_roles: list):
+    def get_request_user_with_roles(self, required_roles: list):
         user_model = self.user_model
 
-        def role_checker(current_user: user_model = Depends(self.get_current_user)):
+        def role_checker(current_user: user_model = Depends(self.get_request_user)):
             if current_user.role not in required_roles:
                 raise self.get_permissions_exc()
 

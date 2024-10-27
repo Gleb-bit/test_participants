@@ -16,6 +16,9 @@ class ParticipantModel(BaseModel):
     first_name: str
     last_name: Optional[str] = None
 
+    longitude: float
+    latitude: float
+
     avatar_base64: Optional[str] = None
     avatar_title: Optional[str] = None
 
@@ -44,6 +47,9 @@ class ParticipantReadModel(BaseModel):
     avatar_url: Optional[str]
     gender: Optional[GenderEnum]
 
+    longitude: float
+    latitude: float
+
     estimates_number: int
 
     created_at: datetime
@@ -51,6 +57,13 @@ class ParticipantReadModel(BaseModel):
 
     class Config:
         from_attributes = True
+
+    def dict(self, *args, **kwargs):
+        data = super().dict(*args, **kwargs)
+        if "created_at" in data:
+            data["created_at"] = data["created_at"].isoformat()
+
+        return data
 
 
 class TokenModel(BaseModel):

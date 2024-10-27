@@ -1,3 +1,5 @@
+import random
+
 from fastapi import Depends, APIRouter, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +22,7 @@ participants_router = APIRouter()
 async def match_participants(
     id: int,
     session: AsyncSession = Depends(get_session),
-    credentials: TokenModel = Depends(auth.get_current_user),
+    credentials: TokenModel = Depends(auth.get_request_user),
 ):
     request_user = await Orm.scalar(
         Participant, session, Participant.email == credentials.email
@@ -56,12 +58,17 @@ async def register(
     session: AsyncSession = Depends(get_session),
 ):
     hashed_password = auth.get_password_hash(participant.password)
+    longitude = random.uniform(0, 200)
+    latitude = random.uniform(0, 200)
+
     data = {
         "email": participant.email,
         "hashed_password": hashed_password,
         "first_name": participant.first_name,
         "last_name": participant.last_name,
         "gender": participant.gender,
+        "longitude": longitude,
+        "latitude": latitude,
     }
 
     if participant.avatar_base64:

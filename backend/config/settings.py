@@ -1,5 +1,7 @@
 from os import environ
 
+from redis.asyncio import Redis
+
 DATABASE_URL = environ.get("DATABASE_URL")
 SECRET_KEY = environ.get("SECRET_KEY")
 
@@ -10,6 +12,10 @@ EMAIL_PORT = environ.get("EMAIL_PORT")
 
 REDIS_HOST = environ.get("REDIS_HOST")
 REDIS_PORT = environ.get("REDIS_PORT")
+REDIS_PASSWORD = environ.get("REDIS_PASSWORD")
+
+REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}"
+redis_client = Redis.from_url(REDIS_URL)
 
 RABBITMQ = {
     "PROTOCOL": "amqp",

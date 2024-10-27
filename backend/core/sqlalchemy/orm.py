@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
-
 class Orm:
 
     @staticmethod
@@ -62,7 +61,7 @@ class Orm:
     @classmethod
     async def filter_by(
         cls,
-        model,
+        table,
         filter_data: dict,
         session: AsyncSession,
         exclude_data: dict = None,
@@ -72,7 +71,7 @@ class Orm:
         Method to filter records in the model based on a dictionary of fields.
 
         :param:
-        - `model`: SQLAlchemy model.
+        - `table`: SQLAlchemy model.
         - `filter_data`: Dictionary with filter conditions.
         - `session`: SQLAlchemy asynchronous session.
         - `relations`: related fields.
@@ -81,13 +80,13 @@ class Orm:
             `Query result filtered by the dictionary fields.`
         """
 
-        query = select(model)
+        query = select(table)
 
         if relations:
             query = cls.get_query_with_relations(query, relations)
 
         if exclude_data:
-            exclude_query = select(model).filter_by(**exclude_data)
+            exclude_query = select(table).filter_by(**exclude_data)
             query = query.except_(exclude_query)
 
         return await session.execute(query.filter_by(**filter_data))
@@ -119,7 +118,7 @@ class Orm:
     @classmethod
     async def scalar(
         cls,
-        model,
+        table,
         session: AsyncSession,
         filters: Union[dict, bool] = dict,
         relations=None,
@@ -128,7 +127,7 @@ class Orm:
         Method to execute a query and retrieve a single record from the model based on filter conditions.
 
         :param:
-        - `model`: SQLAlchemy model to query.
+        - `table`: SQLAlchemy model to query.
         - `session`: SQLAlchemy asynchronous session.
         - `filters`: Dictionary or boolean condition for filtering (default is empty dictionary).
         - `relations`: related fields.
@@ -138,9 +137,9 @@ class Orm:
         """
 
         if isinstance(filters, dict):
-            query = await cls.filter_by(model, filters, session, relations)
+            query = await cls.filter_by(table, filters, session, relations)
         else:
-            query = await cls.where(model, filters, session, relations)
+            query = await cls.where(table, filters, session, relations)
 
         return query.scalar()
 
