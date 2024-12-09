@@ -1,11 +1,11 @@
 import random
 
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import Depends, APIRouter, HTTPException, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database_conf import get_session
-from config.celery_conf import send_email_task
+from core.fastapi.email import send_email
 from core.utils.image import base64_to_image_with_format
 from services.avatar import add_watermark
 from tables.participants import Participant, avatars_folder_path
@@ -21,6 +21,7 @@ participants_router = APIRouter()
 @participants_router.post("/{id}/match/")
 async def match_participants(
     id: int,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
     credentials: TokenModel = Depends(auth.get_request_user),
 ):
@@ -36,7 +37,8 @@ async def match_participants(
 
     participant_email = participant.email
 
-    send_email_task.delay(
+    background_tasks.add_task(
+        send_email,
         [participant_email],
         f"Вы понравились {request_user.first_name}!\n",
         f"Почта участника: {request_user.email}",

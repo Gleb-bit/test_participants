@@ -3,7 +3,6 @@ from celery import Celery
 from celery.schedules import crontab
 
 from config import settings
-from core.fastapi.email import send_email
 from services.estimates import reset_estimates_number
 
 celery_app = Celery(
@@ -17,11 +16,6 @@ celery_app.autodiscover_tasks()
 
 
 @celery_app.task
-def send_email_task(recipients: list[str], subject: str, body: str):
-    return async_to_sync(send_email)(recipients, subject, body)
-
-
-@celery_app.task
 def reset_estimates_number_task():
     return async_to_sync(reset_estimates_number)()
 
@@ -30,7 +24,4 @@ def reset_estimates_number_task():
 def setup_periodic_tasks(sender, **kwargs):
     """Importing and adding periodic tasks"""
 
-    sender.add_periodic_task(
-        crontab(hour=0, minute=0),
-        reset_estimates_number_task.s()
-    )
+    sender.add_periodic_task(crontab(hour=0, minute=0), reset_estimates_number_task.s())
